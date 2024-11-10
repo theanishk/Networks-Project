@@ -1,0 +1,153 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{nips14submit_e,times}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{graphicx} 
+\usepackage{url}
+%\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
+
+
+\title{Voting in Social Networks}
+
+
+\author{
+Anish Kumar\thanks{ The code is submitted at \href{https://github.com/theanishk/Networks-Project.git}{Github}} \\
+Humanities and Social Science\\
+Indian Institute of Technology Roorkee\\
+Haridwar, Uttrakhand 247667 \\
+\texttt{a\_kumar2@hs.iitr.ac.in}
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\nipsfinalcopy % Uncomment for camera-ready version
+
+\begin{document}
+
+
+\maketitle
+
+\begin{abstract}
+This study explores voting mechanisms in social networks, focusing on delegative (or liquid) democracy, where individuals can delegate their votes to trusted neighbors within a network. Inspired by the work of Boldi et al. (2009), we simulate a proxy voting system on the DBLP co-authorship network, examining how influence propagates and dampens across connections. By simulating three types of elections that vary based on productivity and co-authorship strength, we investigate how network structure and individual voting choices. Our findings highlight the significance of both voter choice and network structure in influencing outcomes in social network voting systems.
+\end{abstract}
+
+\section{Introduction}
+Social choice arises when a group of autonomous individuals must choose one option from a set of mutually exclusive alternatives. Society makes numerous collective decisions, such as electing leaders, setting prices for goods or assets, and more.
+
+In classical social choice models, individuals are assumed to have independent preferences. However, individuals rarely reason in isolation, and the classical model does not account for this. Consequently, a better model is needed that incorporates strategic influences, such as persuasion and other forms of interaction.
+
+The effect of echo chambers can polarize societal opinions, significantly affecting outcomes like elections [1]. Moreover, the introduction of technology into democratic processes presents new challenges, especially in designing trust mechanisms for collective decision-making on social media or the broader internet.
+
+In this paper, we explore the problem of voting in social networks on the internet. Specifically, we focus on a delegative voting mechanism, where votes can be transferred to trustworthy nodes within the network, allowing them to vote on behalf of others. Additionally, we introduce a damping factor to reduce the strength of a mandate as votes travel further across the network.
+
+\subsection{Notations and Definitions}
+In this section we provide some background and preliminaries for our system
+\subsubsection{Preferences and Voting function}
+We assume that voters are connected through an undirected network, represented by a graph \( G(V_G, E_G) \), where \( V_G \) is the set of voters and \( E_G \) is the symmetric set of edges. For each \( x \in V_G \), the neighborhood of \( x \) is denoted as \( N_G(x) = \{ y \mid (x, y) \in E_G \} \).
+
+Each individual's preferences are represented by a preference profile \( \{\succeq_1, \dots, \succeq_n \} \), which captures an ordinal ranking of alternatives. These preferences can be mapped to a social choice relation \( \succeq_s \). However, in this model, we use a ``one-vote" system, where each voter selects their highest-ranked candidate.
+
+Each node \( x \in V_G \) chooses exactly one neighboring node as its delegate. Formally, this can be expressed by a voting function \( \nu : V_G \to V_G \), such that \( \nu(x) \in N_G(x) \). The set of all possible voting functions for \( G \) is denoted by \( V_{ot_G} \). For each \( \nu \in V_{ot_G} \), the delegation graph \( D(G, \nu) \) is a directed graph with out-degree 1. If a person does not delegate their vote, this is represented as a self-loop in the delegation graph.
+
+\subsubsection{Aggregation}
+To aggregate preferences, we employ a transitive proxy voting system with exponential damping. The damping factor is intuitive, as trust in a network decays with distance, especially in electronically mediated environments. This setup is similar to the PageRank algorithm used for ranking web pages[2].
+
+Given a fixed damping factor \( \alpha \in [0,1) \), in a graph with out-degree 1, the branching factor is always 1. Therefore, the ranking can be computed as[3]:
+
+\[
+r_i = \frac{(1 - \alpha)}{n} \sum_{p \in \text{Path}(-, i)} \alpha^{|p|}
+\]
+
+The system's behavior is governed primarily by the parameter \( \alpha \). 
+
+\textbf{Bolzano-Weierstrass theorem}: According to the , the scores change continuously with \( \alpha \). Specifically, if \( \alpha_0 \leq \alpha_1 \), and \( x \) is a winner at \( \alpha_0 \) while \( y \) is a winner at \( \alpha_1 \), then there exists some \( \alpha \in [\alpha_0, \alpha_1] \) where both \( x \) and \( y \) are winners at \( \alpha \).
+
+\textbf{Ultimate Sovereignty}: This condition, known as surjectivity or sovereignty, ensures that every node in the network can potentially become a winner. If preferences are reflexive (i.e., each node can vote for itself), then for sufficiently large \( \alpha \) (as \( \alpha \to 1 \)), any node can become a winner.
+
+Also, the voting centrality\footnote{This is a explicit closed formula
+for voting centrality.} of a node \( x \) in a graph \( G \) is given by the following equation[3],:
+
+\[
+r_G(x) = \frac{1 - \alpha}{n_G} \sum_{\pi_1 \perp_{G,x} \pi_2} \frac{\alpha^{|\pi_1 - \pi_2| + |\pi_1| + |\pi_2|}}{1 - \alpha^{|\pi_1 - \pi_2| + |\pi_2|}} \, br(\pi_1, \pi_2^R)
+\]
+
+It is well understood that the strength of influence declines as it travels further from the original voter. Voting centrality captures this ``accumulated" influence by measuring a user's centrality based on the sum of votes—both directly cast and those delegated to them through the network.
+
+
+\section{Data and Measure}
+In this section, we will simulate the voting process on the DBLP collaboration network. The data is taken from \href{https://www.aminer.cn/citation}{here}, specifically from the Citation Network V1, which was released in 2010. This dataset contains information on 504,996 authors and 1,137,165 co-author relationships.
+
+The network represents the collaboration between authors, where nodes correspond to authors and edges represent co-authorships. We will explore how delegative voting mechanisms and the damping factor influence the outcomes within such a large-scale network of academic collaborations.
+
+We simulated a proxy voting system in the DBLP social network, where the scientific community elects a committee of top scientists. In this system, each node (representing a scientist) delegates their vote to one of their neighbors. We assume that two factors influence how this delegation is done: \textbf{productivity} (represented by the number of papers written by the scientist) and \textbf{strength of the co-authorship relation} (measured by the number of papers co-authored).
+
+We considered three types of elections:
+
+\begin{itemize}
+    \item \textbf{Election A} (\textit{productivity only}): In this election, a node votes for its most prolific co-author. In case of a tie, the strength of the co-authorship relationship (i.e., the number of papers co-authored) is used to break the tie.
+    
+    \item \textbf{Election B} (\textit{strength of co-authorship only}): In this election, a node votes for its main co-author, i.e., the co-author with whom it has written the most papers. Ties are broken using productivity (the number of papers written by the node).
+    
+    \item \textbf{Election C} (\textit{adjusted co-authorship}): In this election, a node considers its co-authors in decreasing order of co-authorship strength and votes for the first one who has written more papers than the node itself (i.e., more productive). If no such co-author exists, the node votes for itself.
+\end{itemize}
+
+At first, we aim to investigate how much of the election result depends on voters' choices and whether it can be determined by the underlying structure of the network. For this purpose, we calculated four additional \textit{static} scoring metrics based on the social network:
+
+\begin{itemize}
+    \item \textbf{Degree (DEG)}: The number of co-authors of a node.
+    \item \textbf{PageRank (PR)}: The PageRank score representing the ranking of a node.
+    \item \textbf{Productivity (PROD)}: The number of papers written by the node.
+    \item \textbf{Voting centrality (CEN)}: A centrality measure reflecting the node's influence in the voting process.
+\end{itemize}
+
+To compare the seven scoring metrics (four static and three election results), we used Kendall’s \(\tau\) correlation coefficient, applying the standard damping factor \( \alpha = 0.85 \) as suggested in [3].
+
+\section{Results}
+
+\begin{table}[h]
+\caption{Kendall's \[\tau\] Matrix for DBLP network}
+\label{kendall's-tau-matrix}
+\begin{center}
+\begin{tabular}{l|ccccccc}
+\hline
+ & \textbf{DEG} & \textbf{PR} & \textbf{PROD} & \textbf{CEN} & \textbf{ELECTION A} & \textbf{ELECTION B} & \textbf{ELECTION C} \\
+\hline
+\textbf{DEG} & 1.0000 & 0.5128 & 0.3591 & 0.7196 & 0.2699 & 0.2690 & 0.2689 \\
+\textbf{PR} & 0.5128 & 1.0000 & 0.3126 & 0.7087 & 0.2606 & 0.2600 & 0.2594 \\
+\textbf{PROD} & 0.3591 & 0.3126 & 1.0000 & 0.3035 & 0.0720 & 0.0710 & 0.0709 \\
+\textbf{CEN} & 0.7196 & 0.7087 & 0.3035 & 1.0000 & 0.2611 & 0.2603 & 0.2603 \\
+\textbf{ELECTION A} & 0.2699 & 0.2606 & 0.0720 & 0.2611 & 1.0000 & 0.9144 & 0.5901 \\
+\textbf{ELECTION B} & 0.2690 & 0.2600 & 0.0710 & 0.2603 & 0.9144 & 1.0000 & 0.6062 \\
+\textbf{ELECTION C} & 0.2689 & 0.2594 & 0.0709 & 0.2603 & 0.5901 & 0.6062 & 1.0000 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The results of the voting simulations highlight key aspects of voting behavior in social networks. Table \ref{kendall's-tau-matrix} presents the Kendall’s tau correlation coefficients between the rankings derived from the three election types (A, B, and C) and four additional static metrics (Degree, PageRank, Productivity, and Voting Centrality). 
+
+On comparing these scores, we observe that the static network measures are strongly correlated with one another but have a weak correlation with the voting outcomes, especially for productivity, suggesting that network-based metrics alone cannot fully account for individual voting preferences. This finding indicates that the ranking outcomes depend significantly on voters' choices rather than the underlying graph structure. 
+
+Notably, the rankings from Elections A, B, and C show high correlations with each other (e.g., 0.9144 between A and B), indicating a consistency across election rules that prioritize either productivity or co-authorship strength. The high Kendall’s tau values among elections suggest that each rule, despite its unique focus, tends to identify similar influential individuals within the network. However, the moderate correlation between elections and static measures emphasizes that these voting-based rankings reveal nuances in influence and connectivity beyond what traditional centrality measures capture.
+
+
+\section{Conclusion}
+This study demonstrates the impact of a delegative voting system in a large-scale social network by simulating different election strategies on the DBLP co-authorship network. Our findings indicate that voting outcomes in this network are primarily driven by individual voting choices and delegation paths rather than static structural metrics alone. While static measures like Degree and PageRank capture aspects of influence, they fail to fully explain the dynamics of delegated voting, where personal connections and trust-based delegation play critical roles.
+
+The high correlation among the election results reflects a stability within the voting system, where election outcomes remain consistent across rules that focus on either productivity or co-authorship strength. This stability suggests that delegative voting systems can provide robust representation of preferences even under varying network dynamics and damping factors. Future research could extend these findings by exploring additional network types, integrating partial vote delegation, and assessing the system’s resilience to strategic voting, thereby enhancing our understanding of collective decision-making in social networks.
+
+\newpage
+\subsubsection*{References}
+
+\small{
+[1] Grandi, U. (2017). Social choice and social networks. Trends in Computational Social Choice, 169-184. AI Press.
+
+[2] Page, L., Brin, S., Motwani, R., Winograd, T. (1999). The PageRank citation ranking: Bringing order to the web. Technical Report 66, Stanford University.
+
+[3] Boldi, P., Bonchi, F., Castillo, C., Vigna, S. (2009). Voting in social networks. Proceedings of the 18th ACM International Conference on Information and Knowledge Management, 777-786. ACM.
+}
+
+
+
+\end{document}
